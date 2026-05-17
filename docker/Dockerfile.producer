@@ -1,0 +1,17 @@
+FROM peks-base AS producer
+
+# Build producer application (ndn-cxx already installed in base)
+COPY ndn/producer.cpp /opt/peks/ndn/
+RUN cmake --build /opt/peks/build --target peks_producer -j$(nproc) \
+    && cmake --install /opt/peks/build
+
+# NFD (lightweight — producer needs local forwarder)
+RUN git clone --depth=1 --branch NFD-22.12 --recursive \
+    https://github.com/named-data/NFD.git /opt/NFD \
+    && cd /opt/NFD && ./waf configure && ./waf -j$(nproc) && ./waf install \
+    && ldconfig
+
+COPY docker/scripts/start-producer.sh /start.sh
+RUN chmod +x /start.sh
+
+CMD ["/start.sh"]

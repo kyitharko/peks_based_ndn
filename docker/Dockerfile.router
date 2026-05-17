@@ -1,0 +1,39 @@
+FROM peks-base AS router
+
+# ── NFD 22.12 with PeksStrategy injected ─────────────────────────
+RUN git clone --depth=1 --branch NFD-22.12 --recursive \
+    https://github.com/named-data/NFD.git /opt/NFD
+
+# Inject our strategy files into NFD's strategy directory
+COPY ndn/peks_strategy.hpp ndn/peks_strategy.cpp /opt/NFD/daemon/fw/
+COPY ndn/peks_name.hpp ndn/peks_name.cpp          /opt/NFD/daemon/fw/
+
+# Patch NFD's wscript to compile our strategy files
+RUN python3 - <<'EOF'
+import re, pathlib
+
+wscript = pathlib.Path('/opt/NFD/daemon/fw/wscript')
+text = wscript.read_text()
+
+# Insert our files into the fw source list
+text = text.replace(
+    "algorithm.cpp",
+    "algorithm.cpp\n        peks_strategy.cpp\n        peks_name.cpp"
+)
+wscript.write_text(text)
+print("wscript patched OK")
+EOF
+
+# Build NFD (waf uses pkg-config to find ndn-cxx)
+RUN cd /opt/NFD \
+    && ./waf configure \
+    && ./waf -j$(nproc) \
+    && ./waf install \
+    && ldconfig
+
+COPY docker/scripts/start-router.sh /start.sh
+RUN chmod +x /start.sh
+
+EXPOSE 6363/udp 6363/tcp
+
+CMD ["/start.sh"]

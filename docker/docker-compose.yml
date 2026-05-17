@@ -1,0 +1,71 @@
+version: '3.8'
+
+# Build the shared base image first:
+#   docker build -f docker/Dockerfile.base -t peks-base .
+#
+# Then bring up the full network:
+#   docker compose -f docker/docker-compose.yml up
+
+services:
+
+  # ── Router ────────────────────────────────────────────────────────
+  # Runs NFD with PeksStrategy.
+  # Waits for trapdoors in /shared, then forwards matching Interests.
+  router:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.router
+    image: peks-router
+    hostname: router
+    environment:
+      TRAPDOOR_DIR: /shared
+    volumes:
+      - shared_keys:/shared
+    networks:
+      ndn_net:
+        ipv4_address: 10.10.0.2
+
+  # ── Producer ──────────────────────────────────────────────────────
+  # Generates (pk, sk), writes pk.bin + td_*.bin to /shared,
+  # registers /peks with local NFD, and replies to matching Interests.
+  producer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.producer
+    image: peks-producer
+    hostname: producer
+    volumes:
+      - shared_keys:/shared
+    networks:
+      ndn_net:
+        ipv4_address: 10.10.0.3
+    depends_on:
+      - router
+
+  # ── Consumer ──────────────────────────────────────────────────────
+  # Reads pk.bin from /shared, encrypts name components, sends Interest
+  # through the router, and prints the received Data content.
+  consumer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.consumer
+    image: peks-consumer
+    hostname: consumer
+    volumes:
+      - shared_keys:/shared
+    networks:
+      ndn_net:
+        ipv4_address: 10.10.0.4
+    depends_on:
+      - router
+      - producer
+
+volumes:
+  shared_keys:
+
+networks:
+  ndn_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.0.0/24

@@ -1,0 +1,16 @@
+FROM peks-base AS consumer
+
+COPY ndn/consumer.cpp /opt/peks/ndn/
+RUN cmake --build /opt/peks/build --target peks_consumer -j$(nproc) \
+    && cmake --install /opt/peks/build
+
+# NFD (needed to use ndn-cxx Face)
+RUN git clone --depth=1 --branch NFD-22.12 --recursive \
+    https://github.com/named-data/NFD.git /opt/NFD \
+    && cd /opt/NFD && ./waf configure && ./waf -j$(nproc) && ./waf install \
+    && ldconfig
+
+COPY docker/scripts/start-consumer.sh /start.sh
+RUN chmod +x /start.sh
+
+CMD ["/start.sh"]
