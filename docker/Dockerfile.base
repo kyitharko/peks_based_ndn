@@ -3,7 +3,7 @@ FROM ubuntu:22.04 AS base
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
-    build-essential cmake git pkg-config python3 python3-pip \
+    build-essential cmake git pkg-config python3 \
     libboost-all-dev libssl-dev libsqlite3-dev \
     libgmp-dev libpcap-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -12,19 +12,21 @@ RUN apt-get update && apt-get install -y \
 RUN git clone --depth=1 https://github.com/herumi/mcl.git /opt/mcl \
     && cd /opt/mcl && make -j$(nproc) && make install && ldconfig
 
-# ── ndn-cxx 22.12 ────────────────────────────────────────────────
-RUN git clone --depth=1 --branch ndn-cxx-22.12 \
+# ── ndn-cxx 0.8.1 (required by NFD 22.12) ────────────────────────
+# The repo bundles its own ./waf — no pip install needed.
+RUN git clone --depth=1 --branch ndn-cxx-0.8.1 \
     https://github.com/named-data/ndn-cxx.git /opt/ndn-cxx \
     && cd /opt/ndn-cxx \
-    && pip3 install --quiet waf \
     && ./waf configure --without-osx-keychain \
     && ./waf -j$(nproc) \
     && ./waf install \
     && ldconfig
 
-# ── libpeks ──────────────────────────────────────────────────────
+# ── libpeks + NDN integration ────────────────────────────────────
 COPY ate_pairing.hpp ate_pairing.cpp peks.hpp peks.cpp /opt/peks/
+COPY ate_pairing_test.cpp peks_test.cpp sim_peks_ndn.cpp /opt/peks/
 COPY ndn/peks_name.hpp ndn/peks_name.cpp               /opt/peks/ndn/
+COPY ndn/producer.cpp ndn/consumer.cpp                 /opt/peks/ndn/
 COPY CMakeLists.txt                                    /opt/peks/
 COPY ndn/CMakeLists.txt                                /opt/peks/ndn/
 

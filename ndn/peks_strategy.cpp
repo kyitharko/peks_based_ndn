@@ -91,7 +91,7 @@ void PeksStrategy::afterReceiveInterest(const Interest& interest,
     const auto& fib = this->lookupFib(*pitEntry);
     for (const auto& nexthop : fib.getNextHops()) {
         if (isNextHopEligible(ingress.face, interest, nexthop, pitEntry)) {
-            this->sendInterest(pitEntry, nexthop.getFace(), interest);
+            this->sendInterest(interest, nexthop.getFace(), pitEntry);
             return;
         }
     }

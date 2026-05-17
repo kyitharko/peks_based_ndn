@@ -1,14 +1,18 @@
 FROM peks-base AS producer
 
-# Build producer application (ndn-cxx already installed in base)
+# peks_producer was already built and installed by the base image.
+# Re-copy and rebuild to ensure this layer's binary is consistent.
 COPY ndn/producer.cpp /opt/peks/ndn/
 RUN cmake --build /opt/peks/build --target peks_producer -j$(nproc) \
     && cmake --install /opt/peks/build
 
-# NFD (lightweight — producer needs local forwarder)
+# NFD vanilla (producer needs a local forwarder to register /peks prefix)
 RUN git clone --depth=1 --branch NFD-22.12 --recursive \
     https://github.com/named-data/NFD.git /opt/NFD \
-    && cd /opt/NFD && ./waf configure && ./waf -j$(nproc) && ./waf install \
+    && cd /opt/NFD \
+    && ./waf configure \
+    && ./waf -j$(nproc) \
+    && ./waf install \
     && ldconfig
 
 COPY docker/scripts/start-producer.sh /start.sh

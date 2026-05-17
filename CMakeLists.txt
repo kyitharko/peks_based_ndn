@@ -26,6 +26,10 @@ add_executable(ate_pairing_test ate_pairing_test.cpp)
 target_link_libraries(ate_pairing_test peks)
 
 add_executable(peks_test peks_test.cpp)
+
+# ── PEKS-NDN standalone simulation (no ndn-cxx needed) ──────────
+add_executable(sim_peks_ndn sim_peks_ndn.cpp)
+target_link_libraries(sim_peks_ndn peks)
 target_link_libraries(peks_test peks)
 
 # ── NDN integration (optional — requires ndn-cxx via pkg-config) ─
