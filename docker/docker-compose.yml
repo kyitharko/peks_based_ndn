@@ -1,24 +1,22 @@
-version: '3.8'
-
-# Build the shared base image first:
-#   docker build -f docker/Dockerfile.base -t peks-base .
-#
-# Then bring up the full network:
-#   docker compose -f docker/docker-compose.yml up
+# Build and run:
+#   docker compose -f docker/docker-compose.yml up --build
 
 services:
 
   # ── Router ────────────────────────────────────────────────────────
-  # Runs NFD with PeksStrategy.
-  # Waits for trapdoors in /shared, then forwards matching Interests.
+  # NFD with PeksStrategy compiled in.
+  # Loads 2D trapdoor table from /shared, then forwards matching Interests
+  # using the ExactMatch/LongestMatch algorithm (Ko et al. 2020).
   router:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.router
+      dockerfile: docker/Dockerfile
+      target: router
     image: peks-router
     hostname: router
     environment:
       TRAPDOOR_DIR: /shared
+      NDN_LOG: "peks.strategy=INFO:nfd.Forwarder=WARN"
     volumes:
       - shared_keys:/shared
     networks:
@@ -26,14 +24,18 @@ services:
         ipv4_address: 10.10.0.2
 
   # ── Producer ──────────────────────────────────────────────────────
-  # Generates (pk, sk), writes pk.bin + td_*.bin to /shared,
-  # registers /peks with local NFD, and replies to matching Interests.
+  # Reads NAMES_FILE, generates (pk, sk), writes pk.bin and the full
+  # 2D trapdoor table (td_{row}_{col}.bin) to /shared, then registers
+  # /peks_strategy and replies to authorised Interests.
   producer:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.producer
+      dockerfile: docker/Dockerfile
+      target: producer
     image: peks-producer
     hostname: producer
+    environment:
+      NAMES_FILE: /data/names.txt
     volumes:
       - shared_keys:/shared
     networks:
@@ -43,14 +45,20 @@ services:
       - router
 
   # ── Consumer ──────────────────────────────────────────────────────
-  # Reads pk.bin from /shared, encrypts name components, sends Interest
-  # through the router, and prints the received Data content.
+  # Reads NAMES_FILE, picks QUERY_COUNT random URIs, encrypts each name
+  # once (reused for both sends), then sends two Interests per URI:
+  #   Round 1 → router PEKS test → producer
+  #   Round 2 → router Content Store cache hit (PeksStrategy skipped)
   consumer:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.consumer
+      dockerfile: docker/Dockerfile
+      target: consumer
     image: peks-consumer
     hostname: consumer
+    environment:
+      NAMES_FILE: /data/names.txt
+      QUERY_COUNT: "5"        # change to query more random URIs per run
     volumes:
       - shared_keys:/shared
     networks:

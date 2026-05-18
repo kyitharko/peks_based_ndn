@@ -8,6 +8,7 @@ find_library(MCL_LIB    mcl   PATHS /usr/local/lib REQUIRED)
 find_path(MCL_INCLUDE   mcl/bls12_381.hpp PATHS /usr/local/include REQUIRED)
 find_library(GMP_LIB    gmp   REQUIRED)
 find_library(GMPXX_LIB  gmpxx REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 # ── libpeks (static) ────────────────────────────────────────────
 add_library(peks STATIC ate_pairing.cpp peks.cpp)
@@ -16,7 +17,7 @@ target_include_directories(peks PUBLIC
     $<INSTALL_INTERFACE:include/peks>
     ${MCL_INCLUDE}
 )
-target_link_libraries(peks PUBLIC ${MCL_LIB} ${GMP_LIB} ${GMPXX_LIB} rt)
+target_link_libraries(peks PUBLIC ${MCL_LIB} ${GMP_LIB} ${GMPXX_LIB} rt OpenSSL::Crypto)
 
 install(TARGETS peks DESTINATION lib)
 install(FILES ate_pairing.hpp peks.hpp DESTINATION include/peks)

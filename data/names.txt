@@ -1,0 +1,152 @@
+# PEKS-NDN name registry — 100 URIs
+# Format: /component1/component2/.../componentN
+# Prefix hierarchies included to demonstrate LongestMatch
+
+# ── Google ────────────────────────────────────────────────────────
+/google/staff/director
+/google/staff/director/md
+/google/staff/director/md/profile
+/google/staff/engineer/senior/resume
+/google/staff/engineer/junior/code
+/google/data/gmail/v3/api
+/google/data/maps/v5/doc
+/google/cloud/storage/useast/quota
+/google/cloud/compute/europe/status
+
+# ── Amazon ───────────────────────────────────────────────────────
+/amazon/shop/electronics/laptop/thinkpad
+/amazon/shop/books/programming/python
+/amazon/shop/clothing/shoes/nike
+/amazon/cloud/ec2/uswest/instances
+/amazon/cloud/s3/eucentral/buckets
+/amazon/cloud/rds/apeast/databases
+
+# ── Facebook / Meta ──────────────────────────────────────────────
+/facebook/users/alice/photos/2024
+/facebook/users/bob/posts/recent
+/facebook/users/charlie/friends/list
+/facebook/ads/campaign/tech/metrics
+
+# ── Microsoft ────────────────────────────────────────────────────
+/microsoft/azure/vm/eastus/status
+/microsoft/azure/storage/westus/quota
+/microsoft/office/word/doc/template
+/microsoft/office/excel/sheet/report
+
+# ── NDN (prefix hierarchy demo) ──────────────────────────────────
+/ndn/home/alice
+/ndn/home/alice/data
+/ndn/home/alice/data/file1
+/ndn/home/bob/data/file2
+/ndn/edu/cs/course/lecture1
+/ndn/edu/cs/research/paper1
+/ndn/edu/ee/lab/experiment3
+/ndn/iot/home/thermostat/temperature
+/ndn/iot/home/camera/stream
+/ndn/iot/factory/sensor/pressure
+/ndn/iot/city/traffic/count
+
+# ── Universities ─────────────────────────────────────────────────
+/mit/cs/research/ai/paper
+/mit/cs/course/6001/lecture
+/stanford/ee/research/network/report
+/stanford/medicine/research/cancer/trial
+/ucla/cs/student/thesis/2024
+
+# ── Healthcare ───────────────────────────────────────────────────
+/healthcare/hospital/patient/record/labs
+/healthcare/hospital/doctor/schedule/today
+/healthcare/clinic/prescription/active/list
+/healthcare/pharmacy/drug/inventory/count
+/healthcare/emergency/room/status/available
+
+# ── Finance ──────────────────────────────────────────────────────
+/finance/bank/account/savings/balance
+/finance/bank/account/checking/statement
+/finance/market/stock/AAPL/price
+/finance/market/stock/GOOG/history
+/finance/market/crypto/BTC/rate
+/finance/insurance/policy/health/details
+
+# ── Transport ────────────────────────────────────────────────────
+/transport/traffic/highway/I405/speed
+/transport/traffic/highway/I5/incident
+/transport/train/metro/redline/schedule
+/transport/train/metro/blueline/delay
+/transport/flight/airline/UA123/status
+/transport/flight/airline/DL456/gate
+
+# ── Media ────────────────────────────────────────────────────────
+/media/news/tech/ai/article
+/media/news/sports/basketball/result
+/media/news/politics/election/update
+/media/video/netflix/drama/episode
+/media/video/youtube/tutorial/python
+/media/podcast/tech/episode/latest
+
+# ── Energy ───────────────────────────────────────────────────────
+/energy/solar/panel/output/today
+/energy/wind/turbine/status/online
+/energy/grid/power/city/demand
+
+# ── Smart City ───────────────────────────────────────────────────
+/city/sensor/air/quality/pm25
+/city/sensor/noise/downtown/level
+/city/parking/lot/A1/available
+/city/water/reservoir/level/current
+
+# ── Government ───────────────────────────────────────────────────
+/gov/census/population/district1/count
+/gov/tax/record/2024/filing
+/gov/license/driver/renewal/status
+
+# ── Research ─────────────────────────────────────────────────────
+/research/lab/experiment/result/data
+/research/dataset/image/mnist/train
+/research/model/gpt/version4/weights
+/research/paper/security/peks/abstract
+
+# ── Space ────────────────────────────────────────────────────────
+/space/telescope/hubble/image/galaxy
+/space/satellite/gps/position/accuracy
+/space/mission/mars/rover/telemetry
+
+# ── Agriculture ──────────────────────────────────────────────────
+/agriculture/farm/crop/wheat/yield
+/agriculture/sensor/soil/moisture/field1
+/agriculture/drone/survey/north/map
+
+# ── Retail ───────────────────────────────────────────────────────
+/retail/store/inventory/electronics/count
+/retail/store/promotion/summer/discount
+/retail/online/cart/user123/items
+
+# ── Education ────────────────────────────────────────────────────
+/education/course/math/calculus/quiz
+/education/course/cs/algorithms/grade
+/education/student/record/2024/gpa
+
+# ── Security ─────────────────────────────────────────────────────
+/security/firewall/rule/inbound/status
+/security/vpn/server/us1/load
+/security/auth/token/user456/expiry
+
+# ── Network ──────────────────────────────────────────────────────
+/network/router/core1/interface/eth0
+/network/switch/floor3/port24/status
+/network/dns/server/primary/query
+
+# ── Cloud Native ─────────────────────────────────────────────────
+/cloud/container/k8s/pod/status
+/cloud/serverless/function/api/invoke
+/cloud/database/mongo/shard1/stats
+
+# ── AI / ML ──────────────────────────────────────────────────────
+/ai/model/inference/image/result
+/ai/training/job/nlp/progress
+/ai/dataset/text/wikipedia/size
+
+# ── Gaming ───────────────────────────────────────────────────────
+/gaming/server/uswest/lobby/players
+/gaming/player/leaderboard/global/rank
+/gaming/match/arena/session123/score

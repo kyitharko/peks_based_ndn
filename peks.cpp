@@ -1,4 +1,5 @@
 #include "peks.hpp"
+#include <openssl/sha.h>
 
 using namespace mcl::bn;
 
@@ -46,6 +47,12 @@ AtePairing::G1 PEKS::H1(const std::string& w) const
 
 std::vector<uint8_t> PEKS::H2(const AtePairing::GT& gt) const
 {
-    std::string s = gt.getStr(16);
-    return std::vector<uint8_t>(s.begin(), s.end());
+    // Serialize GT element (Fp12 on BLS12-381 = 576 bytes)
+    uint8_t buf[1024];
+    size_t n = gt.serialize(buf, sizeof(buf));
+
+    // SHA-512 of canonical GT encoding → 64-byte digest
+    uint8_t digest[SHA512_DIGEST_LENGTH];
+    SHA512(buf, n, digest);
+    return std::vector<uint8_t>(digest, digest + SHA512_DIGEST_LENGTH);
 }
