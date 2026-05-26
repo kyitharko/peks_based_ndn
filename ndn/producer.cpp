@@ -1,3 +1,15 @@
+/**
+ * @file producer.cpp
+ * @brief NDN producer: PEKS key generation, trapdoor table distribution, Interest serving.
+ *
+ * Startup sequence:
+ * 1. Read URI registry from `NAMES_FILE`.
+ * 2. Run PEKS::keygen() → write `pk.bin` to shared volume.
+ * 3. For each URI component, compute a trapdoor and write `td_{row}_{col}.bin`.
+ * 4. Register prefix `/producer/peks_strategy` with local NFD.
+ * 5. On successful registration, write `td_ready.flag` (signals routers).
+ * 6. Serve incoming Interests: identify the matching URI via PEKS::test(), return Data.
+ */
 #include "peks_name.hpp"
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
@@ -10,7 +22,7 @@ NDN_LOG_INIT(peks.producer);
 
 // Interest name prefix — Strategy Name marker from Ko et al. 2020 (Image 2).
 // Interest format: /peks_strategy/C1/C2/.../Ck  where Ci = PEKS(P_pub, N_i)
-static const std::string ROUTING_PREFIX = "/producer";
+static const std::string ROUTING_PREFIX = "/producer/peks_strategy";
 
 // ── URI helpers ──────────────────────────────────────────────────────────────
 
@@ -92,20 +104,29 @@ public:
         }
 
         // 4. Signal that the full table is written (router waits for this)
-        saveFile(shareDir + "/td_ready.flag", {0x01});
-
         std::cout << "[PRODUCER] Trapdoor table written: "
                   << m_dataNames.size() << " rows, "
                   << total << " trapdoors total\n";
         NDN_LOG_INFO("Trapdoor table complete: " << total << " entries");
+        // td_ready.flag is written AFTER prefix registration — see run().
     }
 
     void run()
     {
+        // Write td_ready.flag in the prefix-registration success callback so
+        // the router and consumer only unblock once the producer is truly
+        // listening.  If we write it in the constructor (before registration),
+        // there is a race where the first Interest arrives before the producer
+        // app has registered its prefix with its local NFD.
         m_face.setInterestFilter(
             ndn::InterestFilter(ROUTING_PREFIX),
             [this](const ndn::InterestFilter&, const ndn::Interest& interest) {
                 onInterest(interest);
+            },
+            [this](const ndn::Name& prefix) {
+                saveFile(m_shareDir + "/td_ready.flag", {0x01});
+                std::cout << "[PRODUCER] Prefix registered — td_ready.flag written.\n";
+                NDN_LOG_INFO("Prefix registered: " << prefix);
             },
             [](const ndn::Name& prefix, const std::string& reason) {
                 NDN_LOG_ERROR("Prefix registration failed for "
@@ -123,7 +144,7 @@ private:
     std::string identifyName(const ndn::Interest& interest) const
     {
         const ndn::Name& name = interest.getName();
-        const size_t offset = 1;  // skip "peks_strategy" component
+        const size_t offset = 2;  // skip "producer" and "peks_strategy" components
 
         std::vector<PEKS::Ciphertext> peksList;
         for (size_t i = offset; i < name.size(); ++i) {

@@ -1,3 +1,7 @@
+/**
+ * @file peks.cpp
+ * @brief PEKS algorithm implementations: KeyGen, Encrypt, Trapdoor, Test, H1, H2.
+ */
 #include "peks.hpp"
 #include <openssl/sha.h>
 

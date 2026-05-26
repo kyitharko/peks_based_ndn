@@ -1,0 +1,124 @@
+# Doxyfile — PEKS-Based NDN (Ko et al. 2020 reconstruction)
+# Run:  doxygen Doxyfile
+# Output: docs/html/index.html
+
+#---------------------------------------------------------------------------
+# Project
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "PEKS-Based NDN"
+PROJECT_BRIEF          = "Ko et al. 2020 — Ate pairing on BLS12-381, NDN integration"
+PROJECT_NUMBER         = "1.0.0"
+PROJECT_LOGO           =
+OUTPUT_DIRECTORY       = docs
+CREATE_SUBDIRS         = NO
+OUTPUT_LANGUAGE        = English
+
+#---------------------------------------------------------------------------
+# Input
+#---------------------------------------------------------------------------
+INPUT                  = . \
+                         ndn
+RECURSIVE              = NO
+FILE_PATTERNS          = *.hpp *.cpp *.md
+EXCLUDE                = mcl/ \
+                         build/ \
+                         ate_pairing_test.cpp \
+                         peks_test.cpp \
+                         sim_peks_ndn.cpp
+EXCLUDE_PATTERNS       =
+EXTENSION_MAPPING      =
+
+#---------------------------------------------------------------------------
+# Extraction
+#---------------------------------------------------------------------------
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+EXTRACT_ANON_NSPACES   = NO
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+SHOW_INCLUDE_FILES     = YES
+INLINE_SOURCES         = NO
+STRIP_CODE_COMMENTS    = YES
+
+#---------------------------------------------------------------------------
+# Build
+#---------------------------------------------------------------------------
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = NO
+SKIP_FUNCTION_MACROS   = YES
+PREDEFINED             =
+
+#---------------------------------------------------------------------------
+# Main page — use README.md
+#---------------------------------------------------------------------------
+USE_MDFILE_AS_MAINPAGE = README.md
+MARKDOWN_SUPPORT       = YES
+AUTOLINK_SUPPORT       = YES
+
+#---------------------------------------------------------------------------
+# HTML output
+#---------------------------------------------------------------------------
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+HTML_COLORSTYLE        = LIGHT
+HTML_DYNAMIC_SECTIONS  = YES
+GENERATE_TREEVIEW      = YES
+TREEVIEW_WIDTH         = 260
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+HTML_EXTRA_STYLESHEET  =
+HTML_EXTRA_FILES       =
+
+#---------------------------------------------------------------------------
+# Disable other output formats
+#---------------------------------------------------------------------------
+GENERATE_LATEX         = NO
+GENERATE_RTF           = NO
+GENERATE_MAN           = NO
+GENERATE_XML           = NO
+GENERATE_DOCBOOK       = NO
+
+#---------------------------------------------------------------------------
+# Source browsing
+#---------------------------------------------------------------------------
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+STRIP_FROM_PATH        = .
+
+#---------------------------------------------------------------------------
+# Math — use MathJax (no LaTeX installation required)
+#---------------------------------------------------------------------------
+USE_MATHJAX            = YES
+MATHJAX_VERSION        = MathJax_3
+MATHJAX_RELPATH        = https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+MATHJAX_EXTENSIONS     =
+MATHJAX_CODEFILE       =
+
+#---------------------------------------------------------------------------
+# Diagrams (requires Graphviz — skip gracefully if not installed)
+#---------------------------------------------------------------------------
+HAVE_DOT               = NO
+COLLABORATION_GRAPH    = NO
+INCLUDE_GRAPH          = NO
+INCLUDED_BY_GRAPH      = NO
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+
+#---------------------------------------------------------------------------
+# Warnings
+#---------------------------------------------------------------------------
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = NO
+WARN_LOGFILE           =
+
+#---------------------------------------------------------------------------
+# Aliases for convenience
+#---------------------------------------------------------------------------
+ALIASES                = "paper=\xrefitem paper \"Paper reference\" \"Paper references\""

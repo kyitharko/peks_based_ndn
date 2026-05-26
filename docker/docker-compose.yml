@@ -1,32 +1,23 @@
 # Build and run:
 #   docker compose -f docker/docker-compose.yml up --build
+#
+# Topology (Figure 10, Ko et al. 2020):
+#
+#              Producer (10.10.0.10)
+#                   |
+#                  R1 (10.10.0.11)
+#                 /  \
+#       R2 (10.10.0.12)  R3 (10.10.0.13)
+#       /    \              /    \
+# R4(10.10.0.14)  Con1   Con2  R5(10.10.0.15)
+#    |                              |
+#   Con3                           Con4
+#
+# Con1 → R2, Con2 → R3, Con3 → R4, Con4 → R5
 
 services:
 
-  # ── Router ────────────────────────────────────────────────────────
-  # NFD with PeksStrategy compiled in.
-  # Loads 2D trapdoor table from /shared, then forwards matching Interests
-  # using the ExactMatch/LongestMatch algorithm (Ko et al. 2020).
-  router:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      target: router
-    image: peks-router
-    hostname: router
-    environment:
-      TRAPDOOR_DIR: /shared
-      NDN_LOG: "peks.strategy=INFO:nfd.Forwarder=WARN"
-    volumes:
-      - shared_keys:/shared
-    networks:
-      ndn_net:
-        ipv4_address: 10.10.0.2
-
-  # ── Producer ──────────────────────────────────────────────────────
-  # Reads NAMES_FILE, generates (pk, sk), writes pk.bin and the full
-  # 2D trapdoor table (td_{row}_{col}.bin) to /shared, then registers
-  # /peks_strategy and replies to authorised Interests.
+  # ── Producer ──────────────────────────────────────────────────────────
   producer:
     build:
       context: ..
@@ -40,33 +31,193 @@ services:
       - shared_keys:/shared
     networks:
       ndn_net:
-        ipv4_address: 10.10.0.3
-    depends_on:
-      - router
+        ipv4_address: 10.10.0.10
 
-  # ── Consumer ──────────────────────────────────────────────────────
-  # Reads NAMES_FILE, picks QUERY_COUNT random URIs, encrypts each name
-  # once (reused for both sends), then sends two Interests per URI:
-  #   Round 1 → router PEKS test → producer
-  #   Round 2 → router Content Store cache hit (PeksStrategy skipped)
-  consumer:
+  # ── Routers ───────────────────────────────────────────────────────────
+  # R1: directly connected to producer; upstream for R2 and R3.
+  r1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: router
+    image: peks-router
+    hostname: r1
+    environment:
+      TRAPDOOR_DIR: /shared
+      UPSTREAM_IP: 10.10.0.10      # producer
+      NDN_LOG: "peks.strategy=INFO:nfd.Forwarder=WARN"
+    volumes:
+      - shared_keys:/shared
+    networks:
+      ndn_net:
+        ipv4_address: 10.10.0.11
+    depends_on:
+      - producer
+
+  # R2: upstream = R1; Con1 and R4 are downstream.
+  r2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: router
+    image: peks-router
+    hostname: r2
+    environment:
+      TRAPDOOR_DIR: /shared
+      UPSTREAM_IP: 10.10.0.11      # r1
+      NDN_LOG: "peks.strategy=INFO:nfd.Forwarder=WARN"
+    volumes:
+      - shared_keys:/shared
+    networks:
+      ndn_net:
+        ipv4_address: 10.10.0.12
+    depends_on:
+      - r1
+
+  # R3: upstream = R1; Con2 and R5 are downstream.
+  r3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: router
+    image: peks-router
+    hostname: r3
+    environment:
+      TRAPDOOR_DIR: /shared
+      UPSTREAM_IP: 10.10.0.11      # r1
+      NDN_LOG: "peks.strategy=INFO:nfd.Forwarder=WARN"
+    volumes:
+      - shared_keys:/shared
+    networks:
+      ndn_net:
+        ipv4_address: 10.10.0.13
+    depends_on:
+      - r1
+
+  # R4: upstream = R2; Con3 is downstream.
+  r4:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: router
+    image: peks-router
+    hostname: r4
+    environment:
+      TRAPDOOR_DIR: /shared
+      UPSTREAM_IP: 10.10.0.12      # r2
+      NDN_LOG: "peks.strategy=INFO:nfd.Forwarder=WARN"
+    volumes:
+      - shared_keys:/shared
+    networks:
+      ndn_net:
+        ipv4_address: 10.10.0.14
+    depends_on:
+      - r2
+
+  # R5: upstream = R3; Con4 is downstream.
+  r5:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: router
+    image: peks-router
+    hostname: r5
+    environment:
+      TRAPDOOR_DIR: /shared
+      UPSTREAM_IP: 10.10.0.13      # r3
+      NDN_LOG: "peks.strategy=INFO:nfd.Forwarder=WARN"
+    volumes:
+      - shared_keys:/shared
+    networks:
+      ndn_net:
+        ipv4_address: 10.10.0.15
+    depends_on:
+      - r3
+
+  # ── Consumers ─────────────────────────────────────────────────────────
+  # Con1: connected to R2 (paper Section 5.2 — primary requestor)
+  con1:
     build:
       context: ..
       dockerfile: docker/Dockerfile
       target: consumer
     image: peks-consumer
-    hostname: consumer
+    hostname: con1
     environment:
       NAMES_FILE: /data/names.txt
-      QUERY_COUNT: "5"        # change to query more random URIs per run
+      QUERY_COUNT: "0"             # 0 = all names (Section 5.2: Con1 requests all)
+      ROUTER_IP: 10.10.0.12       # r2
+      CONSUMER_ID: "1"
     volumes:
       - shared_keys:/shared
     networks:
       ndn_net:
-        ipv4_address: 10.10.0.4
+        ipv4_address: 10.10.0.21
     depends_on:
-      - router
-      - producer
+      - r2
+
+  # Con2: connected to R3
+  con2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: consumer
+    image: peks-consumer
+    hostname: con2
+    environment:
+      NAMES_FILE: /data/names.txt
+      QUERY_COUNT: "5"
+      ROUTER_IP: 10.10.0.13       # r3
+      CONSUMER_ID: "2"
+    volumes:
+      - shared_keys:/shared
+    networks:
+      ndn_net:
+        ipv4_address: 10.10.0.22
+    depends_on:
+      - r3
+
+  # Con3: connected to R4
+  con3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: consumer
+    image: peks-consumer
+    hostname: con3
+    environment:
+      NAMES_FILE: /data/names.txt
+      QUERY_COUNT: "5"
+      ROUTER_IP: 10.10.0.14       # r4
+      CONSUMER_ID: "3"
+    volumes:
+      - shared_keys:/shared
+    networks:
+      ndn_net:
+        ipv4_address: 10.10.0.23
+    depends_on:
+      - r4
+
+  # Con4: connected to R5
+  con4:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: consumer
+    image: peks-consumer
+    hostname: con4
+    environment:
+      NAMES_FILE: /data/names.txt
+      QUERY_COUNT: "5"
+      ROUTER_IP: 10.10.0.15       # r5
+      CONSUMER_ID: "4"
+    volumes:
+      - shared_keys:/shared
+    networks:
+      ndn_net:
+        ipv4_address: 10.10.0.24
+    depends_on:
+      - r5
 
 volumes:
   shared_keys:

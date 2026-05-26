@@ -1,3 +1,7 @@
+/**
+ * @file ate_pairing.cpp
+ * @brief AtePairing implementation — thin delegation to mcl primitives.
+ */
 #include "ate_pairing.hpp"
 
 using namespace mcl::bn;

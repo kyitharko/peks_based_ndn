@@ -16,6 +16,10 @@ peks_test
 build/
 obj/
 
+# Doxygen output (generate locally with: doxygen Doxyfile)
+docs/html/
+docs/latex/
+
 # mcl submodule build artifacts (if vendored)
 mcl/*
 mcl/obj/

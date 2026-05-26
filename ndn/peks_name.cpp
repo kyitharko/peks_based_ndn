@@ -1,3 +1,7 @@
+/**
+ * @file peks_name.cpp
+ * @brief PeksName wire-encoding implementation: G1/G2 serialize/deserialize helpers.
+ */
 #include "peks_name.hpp"
 #include <stdexcept>
 

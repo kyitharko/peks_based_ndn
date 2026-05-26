@@ -1,3 +1,7 @@
+/**
+ * @file peks_strategy.cpp
+ * @brief PeksStrategy implementation: trapdoor table loading, ExactMatch/LongestMatch search.
+ */
 #include "peks_strategy.hpp"
 #include <nfd/daemon/fw/algorithm.hpp>
 #include <ndn-cxx/util/logger.hpp>
@@ -68,9 +72,13 @@ void PeksStrategy::afterReceiveInterest(const Interest& interest,
 {
     const Name& name = interest.getName();
 
-    // Component [0] is the "peks_strategy" marker — skip it.
-    // Components [1 .. n-1] are the PEKS ciphertexts (PEKSList in the paper).
-    const size_t offset = 1;
+    // Interest name format: /producer/peks_strategy/C1/.../Ck
+    // Component [0] = "producer"       — routing prefix, skip.
+    // Component [1] = "peks_strategy"  — PEKS marker, skip.
+    // Components [2 .. n-1] are the PEKS ciphertexts (PEKSList in the paper).
+    // A name without "peks_strategy" never reaches this strategy because NFD
+    // only invokes PeksStrategy for the /producer/peks_strategy prefix.
+    const size_t offset = 2;
 
     if (m_trapdoorTable.empty()) {
         NDN_LOG_WARN("Trapdoor table empty — rejecting: " << name);
