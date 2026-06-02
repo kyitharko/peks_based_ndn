@@ -14,12 +14,15 @@ pub struct PrivateKey {
     pub alpha: Fr,
 }
 
-pub struct KeyPair {
-    pub private_key: PrivateKey,
-    pub public_key: PublicKey,
+
+pub fn generate_key_pair() -> (PrivateKey, PublicKey) {
+    let private_key = PrivateKey { alpha: generate_random() };
+    let generator = G2Projective::generator();
+    let public_key = PublicKey {
+        h: generator * private_key.alpha,
+    };
+    (private_key, public_key)
 }
-
-
 pub fn generate_random() -> Fr {
     let mut rng = thread_rng();
     Fr::rand(&mut rng)
@@ -31,19 +34,11 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let mut _private_key = PrivateKey { alpha: generate_random() };
-        let _generator = G2Projective::generator();
-        let mut _public_key = PublicKey {
-            h: _generator * _private_key.alpha,
-        };
-        let _key_pair = KeyPair {
-            private_key: _private_key,
-            public_key: _public_key,
-        };
-        assert!(_key_pair.private_key.alpha != Fr::ZERO);
-        assert!(_key_pair.public_key.h != G2Projective::ZERO);
+        let (private_key, public_key) = generate_key_pair();
+        assert!(private_key.alpha != Fr::ZERO);
+        assert!(public_key.h != G2Projective::ZERO);
         let generator = G2Projective::generator();
-        let expected_h: G2Projective = generator * _key_pair.private_key.alpha;
-        assert!(expected_h == _key_pair.public_key.h);
+        let expected_h: G2Projective = generator * private_key.alpha;
+        assert!(expected_h == public_key.h);
     }
 }
