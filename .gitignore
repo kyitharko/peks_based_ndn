@@ -1,26 +1,9 @@
-# Compiled binaries
-ate_pairing
-ate_pairing_test
-peks_test
-
-# Object files and dependency files
-*.o
-*.d
-
-# Libraries
-*.a
-*.so
-*.so.*
+# lock file
+Cargo.lock
 
 # Build directories
-build/
-obj/
 
-# mcl submodule build artifacts (if vendored)
-mcl/*
-mcl/obj/
-mcl/lib/
-mcl/bin/
+peks_ndn/target/*
 
 # Editor and IDE
 .vscode/
