@@ -68,6 +68,14 @@ pub fn generate_random() -> Fr {
     Fr::rand(&mut rng)
 }
 
+pub fn test(trapdoor: &Trapdoor, ciphertext: &Ciphertext) -> bool {
+    let pairing_left = Bls12_381::pairing(trapdoor.t, ciphertext.a);
+    let mut bytes = Vec::new();
+    pairing_left.serialize_uncompressed(&mut bytes).unwrap();
+    let hash_left: [u8; 32] = Sha256::digest(&bytes).into();
+    hash_left == ciphertext.b
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -150,5 +158,31 @@ mod tests {
         let trapdoor1 = generate_trapdoor(&private_key1, b"alice").unwrap();
         let trapdoor2 = generate_trapdoor(&private_key2, b"alice").unwrap();
         assert!(trapdoor1.t != trapdoor2.t);
+    }
+
+    #[test]
+    fn peks_round_trip_succeeds_for_matching_keyword() {
+        let (private_key, public_key) = generate_key_pair();
+        let keyword = b"alice";
+        let trapdoor = generate_trapdoor(&private_key, keyword).unwrap();
+        let ciphertext = encrypt(&public_key, keyword).unwrap();
+        assert!(test(&trapdoor, &ciphertext));
+    }
+    #[test]
+    fn peks_round_trip_fails_for_non_matching_keyword() {
+        let (private_key, public_key) = generate_key_pair();
+        let trapdoor = generate_trapdoor(&private_key, b"alice").unwrap();
+        let ciphertext = encrypt(&public_key, b"bob").unwrap();
+        assert!(!test(&trapdoor, &ciphertext));
+    }
+    #[test]
+    fn peks_handles_multiple_encryptions_of_same_keyword() {
+    let (private_key, public_key) = generate_key_pair();
+    let trapdoor_alice = generate_trapdoor(&private_key, b"alice").unwrap();
+    let ct1 = encrypt(&public_key, b"alice").unwrap();
+    let ct2 = encrypt(&public_key, b"alice").unwrap();
+    assert!(ct1.a != ct2.a);  // probabilistic
+    assert!(test(&trapdoor_alice, &ct1));  // both match the same trapdoor
+    assert!(test(&trapdoor_alice, &ct2));
     }
 }
