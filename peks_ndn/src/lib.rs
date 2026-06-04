@@ -22,6 +22,16 @@ pub struct Ciphertext {
     pub b: [u8; 32],
 }
 
+pub struct Trapdoor {
+    pub t: G1Projective,
+}
+
+pub fn generate_trapdoor(private_key: &PrivateKey, keyword: &[u8]) -> Result<Trapdoor, HashToCurveError> {
+    let h1_w = hash_to_g1(keyword)?;
+    let t = h1_w * private_key.alpha;
+    Ok(Trapdoor {t})
+}
+
 pub fn encrypt(public_key: &PublicKey, keyword: &[u8]) -> Result<Ciphertext, HashToCurveError>{
     let r = generate_random();
     let a = G2Projective::generator() * r;
@@ -117,4 +127,28 @@ mod tests {
     assert!(ct1.a != ct2.a || ct1.b != ct2.b);
     }
 
+    #[test]
+    fn trapdoor_is_deterministic() {
+        let (private_key, _) = generate_key_pair();
+        let trapdoor1 = generate_trapdoor(&private_key, b"alice").unwrap();
+        let trapdoor2 = generate_trapdoor(&private_key, b"alice").unwrap();
+        assert_eq!(trapdoor1.t, trapdoor2.t);
+    }
+
+    #[test]
+    fn trapdoor_different_keywords() {
+        let (private_key, _) = generate_key_pair();
+        let trapdoor1 = generate_trapdoor(&private_key, b"alice").unwrap();
+        let trapdoor2 = generate_trapdoor(&private_key, b"bob").unwrap();
+        assert!(trapdoor1.t != trapdoor2.t);
+    }
+
+    #[test]
+    fn different_trapdoors_different_key_same_keyword() {
+        let (private_key1, _) = generate_key_pair();
+        let (private_key2, _) = generate_key_pair();
+        let trapdoor1 = generate_trapdoor(&private_key1, b"alice").unwrap();
+        let trapdoor2 = generate_trapdoor(&private_key2, b"alice").unwrap();
+        assert!(trapdoor1.t != trapdoor2.t);
+    }
 }
