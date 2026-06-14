@@ -38,6 +38,8 @@ assert!(test(&trapdoor, &ciphertext));
 ```
 
 ## Repository structure
+
+```
 peks_ndn/
 ├── src/
 │   ├── lib.rs      Gateway: type definitions and module declarations
@@ -45,6 +47,7 @@ peks_ndn/
 │   ├── hash.rs     Hash-to-curve primitive
 │   └── utils.rs    Shared helpers (random sampling, pairing serialization)
 └── Cargo.toml
+```
 
 ## Citation
 
