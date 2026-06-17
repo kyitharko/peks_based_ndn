@@ -21,6 +21,9 @@ pub struct Trapdoor {
 pub mod peks;
 pub mod hash;
 mod utils;
+pub mod ndn;
 
 pub use peks::{generate_key_pair, encrypt, generate_trapdoor, test};
 pub use hash::hash_to_g1;
+// pub use ndn::name::Name;
+pub use ndn::helper;

@@ -4,11 +4,44 @@ use crate::hash::hash_to_g1;
 
 
 use ark_ec::{hashing::HashToCurveError, PrimeGroup, pairing::Pairing};
-use ark_bls12_381::{G2Projective, Bls12_381};
-use ark_serialize::{CanonicalSerialize};
+use ark_bls12_381::{G1Projective, G2Projective, Bls12_381};
+use ark_serialize::{CanonicalSerialize, CanonicalDeserialize, SerializationError};
 use sha2::{Sha256, digest::Digest};
 
 
+impl Trapdoor {
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        self.t.serialize_compressed(&mut bytes).unwrap();
+        bytes
+    }
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, SerializationError> {
+        let point = G1Projective::deserialize_compressed(bytes)?;
+        Ok(Trapdoor { t: point })
+    }
+}
+
+impl Ciphertext {
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        self.a.serialize_compressed(&mut bytes).unwrap();
+        bytes.extend_from_slice(&self.b);
+        bytes
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, SerializationError> {
+        // Compressed G2 element on BLS12-381 is 96 bytes, 
+        const G2_SIZE: usize = 96;
+
+        if bytes.len() != G2_SIZE + 32 {
+            return Err(SerializationError::InvalidData);
+        }
+        let a = G2Projective::deserialize_compressed(&bytes[..G2_SIZE])?;
+        let mut b = [0u8; 32];
+        b.copy_from_slice(&bytes[G2_SIZE..]);
+        Ok(Ciphertext {a, b})
+    }
+}
 
 pub fn generate_key_pair() -> (PrivateKey, PublicKey) {
     let private_key = PrivateKey { alpha: generate_random() };
@@ -95,7 +128,30 @@ mod peks_test {
     let ct2 = encrypt(&public_key, b"bob").unwrap();
     assert!(ct1.a != ct2.a || ct1.b != ct2.b);
     }
+
+
+    #[test]
+    fn cipher_text_round_trip() {
+        let (_, public_key) = generate_key_pair();
+        let original = encrypt(&public_key, b"alice").unwrap();
+        let bytes = original.to_bytes();
+        let recovered = Ciphertext::from_bytes(&bytes).unwrap();
+    
+    
+        // Verify a was correctly serialized and deserialized
+        assert_eq!(original.a, recovered.a);
+    
+        // Verify b was correctly serialized and deserialized
+        assert_eq!(original.b, recovered.b);
+    }
+
+    #[test]
+    fn ciphertext_from_bytes_rejects_wrong_length() {
+        let result = Ciphertext::from_bytes(&[0u8; 50]); // wrong size
+        assert!(result.is_err());
+    }
 }
+
 
 #[cfg(test)]
 mod trapdoor_test {
@@ -123,6 +179,30 @@ mod trapdoor_test {
         let trapdoor1 = generate_trapdoor(&private_key1, b"alice").unwrap();
         let trapdoor2 = generate_trapdoor(&private_key2, b"alice").unwrap();
         assert!(trapdoor1.t != trapdoor2.t);
+    }
+    #[test]
+    fn trapdoor_serialization_is_deterministic() {
+        let (private_key, _) = generate_key_pair();
+        let t1 = generate_trapdoor(&private_key, b"alice").unwrap();
+        let t2 = generate_trapdoor(&private_key, b"alice").unwrap();
+        assert_eq!(t1.to_bytes(), t2.to_bytes());
+    }
+    
+    #[test]
+    fn different_trapdoors_have_different_bytes() {
+        let (private_key, _) = generate_key_pair();
+        let t1 = generate_trapdoor(&private_key, b"alice").unwrap();
+        let t2 = generate_trapdoor(&private_key, b"bob").unwrap();
+        assert!(t1.to_bytes() != t2.to_bytes());
+    }
+
+    #[test]
+    fn trapdoor_round_trip() {
+        let (private_key, _) = generate_key_pair();
+        let original = generate_trapdoor(&private_key, b"alice").unwrap();
+        let bytes = original.to_bytes();
+        let recovered = Trapdoor::from_bytes(&bytes).unwrap();
+        assert_eq!(original.t, recovered.t);
     }
 }
 
@@ -154,4 +234,6 @@ mod peks_operation_test {
     assert!(test(&trapdoor_alice, &ct1));  // both match the same trapdoor
     assert!(test(&trapdoor_alice, &ct2));
     }
+    
 }
+
