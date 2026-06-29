@@ -204,6 +204,8 @@ mod trapdoor_test {
         let recovered = Trapdoor::from_bytes(&bytes).unwrap();
         assert_eq!(original.t, recovered.t);
     }
+
+    
 }
 
 #[cfg(test)]

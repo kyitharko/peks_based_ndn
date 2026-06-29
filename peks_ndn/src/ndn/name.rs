@@ -17,6 +17,12 @@ pub struct NameCiphertext {
     pub components: Vec<Ciphertext>,
 }
 
+impl NameTrapdoor{
+    pub fn sort_key(&self) -> Vec<u8> {
+        self.components.iter().flat_map(|t| t.to_bytes()).collect()
+    }
+}
+
 pub fn name_to_trapdoor(
     private_key: &PrivateKey,
     name: &str,
@@ -94,5 +100,30 @@ mod name_to_trapdoor_test {
             name_to_ciphertext(&public_key, ""), 
             Err(NameError::Parse(NameParseError::Empty))
         ));
+    }
+
+    #[test]
+    fn sort_key_is_deterministic(){
+        let(private_key, _) = generate_key_pair();
+        let nt1 = name_to_trapdoor(&private_key, "/ndn/test/peks").unwrap();
+        let nt2 = name_to_trapdoor(&private_key, "/ndn/test/peks").unwrap();
+        assert_eq!(nt1.sort_key(), nt2.sort_key());
+    }
+
+    #[test]
+    fn sort_keys_with_shared_name_prefix_share_byte_prefix() {
+        let (private_key, _) = generate_key_pair();
+        let nt1 = name_to_trapdoor(&private_key, "/a/b/c").unwrap();
+        let nt2 = name_to_trapdoor(&private_key, "/a/b/d").unwrap();
+    
+        // Both names start with /a/b. Their sort keys should share the first 2*48 = 96 bytes.
+        let shared_bytes = nt1.sort_key().iter()
+            .zip(nt2.sort_key().iter())
+            .take_while(|(a, b)| a == b)
+            .count();
+    
+        assert!(shared_bytes >= 96, 
+            "Expected at least 96 shared bytes (2 trapdoors x 48 bytes), got {}", 
+            shared_bytes);
     }
 }
