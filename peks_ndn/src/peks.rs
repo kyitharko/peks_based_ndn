@@ -9,6 +9,7 @@ use ark_serialize::{CanonicalSerialize, CanonicalDeserialize, SerializationError
 use sha2::{Sha256, digest::Digest};
 
 
+
 impl Trapdoor {
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();

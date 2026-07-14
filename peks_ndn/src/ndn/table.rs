@@ -71,6 +71,25 @@ impl TrapdoorTable {
         
         MatchResult { exact_match, longest_prefix }
     }
+
+    /// Return the trapdoor sequence at the given row index, or None if the
+    /// index is out of bounds.
+    pub fn get_trapdoors(&self, row: usize) -> Option<&[Trapdoor]> {
+        self.entries.get(row).map(|e| e.trapdoors.as_slice())
+    }
+
+    /// Return the cleartext name at the given row index, if one is stored
+    /// (producer-side entries have Some, router-side entries have None).
+    /// Returns None if the index is out of bounds or the row has no
+    /// cleartext name attached.
+    pub fn get_cleartext_name(&self, row: usize) -> Option<&str> {
+        self.entries.get(row).and_then(|e| e.cleartext_name.as_deref())
+    }
+
+    pub fn len(&self) -> usize {
+        self.entries.len()
+    }
+
 }
 
 
@@ -151,5 +170,59 @@ mod tests {
         
         assert_eq!(result.exact_match, None);
         assert_eq!(result.longest_prefix, None);
+    }
+
+    #[test]
+    fn get_trapdoors_returns_row_contents() {
+        let (private_key, _) = generate_key_pair();
+        let mut table = TrapdoorTable::new();
+        let nt = name_to_trapdoor(&private_key, "/a/b/c").unwrap();
+        let original_trapdoors = nt.components.clone();
+        table.insert(nt, Some("/a/b/c".to_string()));
+
+        let retrieved = table.get_trapdoors(0).unwrap();
+        assert_eq!(retrieved.len(), 3);
+        // Compare each trapdoor's serialized bytes to confirm they match
+        for (orig, ret) in original_trapdoors.iter().zip(retrieved.iter()) {
+            assert_eq!(orig.to_bytes(), ret.to_bytes());
+        }
+    }
+
+    #[test]
+    fn get_trapdoors_out_of_bounds_returns_none() {
+        let table = TrapdoorTable::new();
+        assert!(table.get_trapdoors(0).is_none());
+        assert!(table.get_trapdoors(100).is_none());
+    }
+
+    #[test]
+    fn get_cleartext_name_returns_stored_name() {
+        let (private_key, _) = generate_key_pair();
+        let mut table = TrapdoorTable::new();
+        table.insert(
+            name_to_trapdoor(&private_key, "/producer/alice").unwrap(),
+            Some("/producer/alice".to_string()),
+        );
+
+        assert_eq!(table.get_cleartext_name(0), Some("/producer/alice"));
+    }
+
+    #[test]
+    fn get_cleartext_name_returns_none_when_no_name_stored() {
+        let (private_key, _) = generate_key_pair();
+        let mut table = TrapdoorTable::new();
+        // Insert without cleartext name — this is the router-side case
+        table.insert(
+            name_to_trapdoor(&private_key, "/producer/alice").unwrap(),
+            None,
+        );
+
+        assert!(table.get_cleartext_name(0).is_none());
+    }
+
+    #[test]
+    fn get_cleartext_name_out_of_bounds_returns_none() {
+        let table = TrapdoorTable::new();
+        assert!(table.get_cleartext_name(0).is_none());
     }
 }

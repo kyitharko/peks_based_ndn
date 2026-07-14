@@ -1,6 +1,7 @@
 use ark_bls12_381::{Fr, G1Projective, G2Projective};
 
 
+#[derive(Clone)]
 pub struct PublicKey {
     pub h: G2Projective,
 }
@@ -14,9 +15,14 @@ pub struct Ciphertext {
     pub b: [u8; 32],
 }
 
+#[derive(Clone)]
 pub struct Trapdoor {
     pub t: G1Projective,
 }
+
+// pub struct Trapdoor {
+//     pub t: G1Projective,
+// }
 
 pub mod peks;
 pub mod hash;
