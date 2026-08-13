@@ -170,7 +170,10 @@ DOI: [`10.1109/MSN50589.2020.00099`](https://doi.org/10.1109/MSN50589.2020.00099
 
 ## License
 
-*(Pending — commonly MIT, Apache-2.0, or dual MIT/Apache-2.0 for Rust projects.)*
+This project is dual-licensed under either:
+
+- [MIT License](LICENSE-MIT)
+- [Apache License, Version 2.0](LICENSE-APACHE)
 
 ## Contributions
 
